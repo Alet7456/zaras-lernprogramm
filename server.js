@@ -1,59 +1,69 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'users.json');
 
-// Ensure data directory and file exist
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-    fs.mkdirSync(path.join(__dirname, 'data'));
-}
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, '{}', 'utf8');
-}
+// Supabase setup
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+);
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Helper: read/write user data ---
-function readAllData() {
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(raw);
-}
-
-function writeAllData(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
-
 // --- API Routes ---
 
-// Get user data (chapters)
-app.get('/api/user/:name', (req, res) => {
+// Get user data
+app.get('/api/user/:name', async (req, res) => {
     const name = req.params.name.toLowerCase().trim();
-    const data = readAllData();
-    const userData = data[name] || { chapters: [] };
-    res.json(userData);
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('data')
+            .eq('name', name)
+            .single();
+
+        if (error && error.code === 'PGRST116') {
+            // User not found, return empty
+            return res.json({ chapters: [] });
+        }
+        if (error) throw error;
+
+        res.json(data.data);
+    } catch (err) {
+        console.error('GET error:', err.message);
+        res.status(500).json({ error: 'Fehler beim Laden' });
+    }
 });
 
-// Save user data (chapters)
-app.put('/api/user/:name', (req, res) => {
+// Save user data
+app.put('/api/user/:name', async (req, res) => {
     const name = req.params.name.toLowerCase().trim();
-    const data = readAllData();
-    data[name] = req.body;
-    writeAllData(data);
-    res.json({ ok: true });
+    try {
+        const { error } = await supabase
+            .from('users')
+            .upsert({ name, data: req.body, updated_at: new Date().toISOString() },
+                     { onConflict: 'name' });
+
+        if (error) throw error;
+
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('PUT error:', err.message);
+        res.status(500).json({ error: 'Fehler beim Speichern' });
+    }
 });
 
 // --- User Page Route ---
-// /user/:name serves the app
 app.get('/user/:name', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Redirect root to a landing hint
+// Landing page
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
