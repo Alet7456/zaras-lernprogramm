@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zaras Lernprogramm</title>
+    <link rel="stylesheet" href="/style.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <div id="app">
+        <!-- NAVIGATION -->
+        <nav id="navbar">
+            <div class="nav-brand" onclick="showView('dashboard')">Zaras Lernprogramm</div>
+            <div class="nav-links">
+                <button onclick="showView('dashboard')" class="nav-btn active" data-view="dashboard">Meine Kapitel</button>
+                <button onclick="showView('upload')" class="nav-btn" data-view="upload">Neue Datei</button>
+                <button onclick="openSettings()" class="nav-btn" title="Einstellungen">Einstellungen</button>
+            </div>
+        </nav>
+
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="view active">
+            <div class="dashboard-header">
+                <h1>Meine Kapitel</h1>
+                <p class="subtitle" id="user-greeting"></p>
+            </div>
+            <div id="chapter-list" class="chapter-grid"></div>
+            <div id="no-chapters" class="empty-state" style="display:none;">
+                <div class="empty-icon">📚</div>
+                <h2>Noch keine Kapitel vorhanden</h2>
+                <p>Lade eine Word-Datei hoch, um loszulegen.</p>
+                <button onclick="showView('upload')" class="btn btn-primary">Datei hochladen</button>
+            </div>
+            <div id="study-bar" class="study-bar" style="display:none;">
+                <span id="selected-count">0 Kapitel ausgewählt</span>
+                <button onclick="startStudySetup()" class="btn btn-primary">Lernen starten</button>
+            </div>
+        </div>
+
+        <!-- UPLOAD -->
+        <div id="view-upload" class="view">
+            <div class="upload-container">
+                <h1>Word-Datei hochladen</h1>
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-icon">📄</div>
+                    <p>Datei hierher ziehen oder klicken</p>
+                    <p class="hint">.docx Dateien (3-5 Seiten empfohlen)</p>
+                    <input type="file" id="file-input" accept=".docx" hidden>
+                </div>
+                <div id="upload-preview" style="display:none;">
+                    <div class="form-group">
+                        <label for="chapter-name">Kapitelname</label>
+                        <input type="text" id="chapter-name" placeholder="z.B. Biologie Kapitel 3">
+                    </div>
+                    <div id="topics-preview" class="topics-preview"></div>
+                    <div class="upload-actions">
+                        <button onclick="resetUpload()" class="btn btn-secondary">Abbrechen</button>
+                        <button onclick="saveChapter()" class="btn btn-primary">Kapitel speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDY SETUP -->
+        <div id="view-study-setup" class="view">
+            <div class="setup-container">
+                <h1>Lernmodus einrichten</h1>
+                <p class="subtitle">Wähle die Topics aus, die du lernen möchtest.</p>
+                <div id="setup-chapters"></div>
+                <div class="setup-actions">
+                    <button onclick="showView('dashboard')" class="btn btn-secondary">Zurück</button>
+                    <button onclick="startStudy()" class="btn btn-primary">Lernen starten</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDY SESSION -->
+        <div id="view-study" class="view">
+            <div class="study-container">
+                <div class="study-header">
+                    <button onclick="endStudy()" class="btn btn-secondary btn-sm">Beenden</button>
+                    <div class="study-stats">
+                        <span id="stat-remaining" class="stat">Im Stapel: <strong>0</strong></span>
+                        <span id="stat-done" class="stat">Fertig: <strong>0</strong></span>
+                        <span id="stat-waiting" class="stat">Gesamt: <strong>0</strong></span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+
+                <!-- Card display -->
+                <div id="study-card-area" style="display:none;">
+                    <div class="card-topic-label" id="card-topic-label"></div>
+                    <div id="flashcard" class="flashcard" onclick="flipCard()">
+                        <div class="card-front">
+                            <div class="card-label">Frage</div>
+                            <div id="card-front-text" class="card-text"></div>
+                        </div>
+                        <div class="card-back">
+                            <div class="card-label">Antwort</div>
+                            <div id="card-back-text" class="card-text"></div>
+                        </div>
+                    </div>
+                    <div id="card-buttons" class="card-buttons" style="display:none;">
+                        <button onclick="rateCard('wrong')" class="btn btn-rate btn-wrong">Falsch</button>
+                        <button onclick="rateCard('hard')" class="btn btn-rate btn-hard">Schwer</button>
+                        <button onclick="rateCard('correct')" class="btn btn-rate btn-correct">Richtig</button>
+                    </div>
+                    <div id="card-hint" class="card-hint">Klicke auf die Karte zum Umdrehen</div>
+                </div>
+
+                <!-- Session complete -->
+                <div id="study-complete" class="study-complete" style="display:none;">
+                    <div class="complete-icon">🎉</div>
+                    <h2>Sitzung abgeschlossen!</h2>
+                    <div id="session-stats" class="session-stats"></div>
+                    <button onclick="showView('dashboard')" class="btn btn-primary">Zurück zur Übersicht</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-overlay" class="modal-overlay" style="display:none;" onclick="closeSettings(event)">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Einstellungen</h2>
+                    <button onclick="closeSettings()" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-content">
+                    <div class="form-group">
+                        <label for="api-key-input">Claude API-Key</label>
+                        <input type="password" id="api-key-input" placeholder="sk-ant-...">
+                        <p class="hint" style="margin-top:8px;">Dein API-Key wird lokal im Browser gespeichert (nicht auf dem Server).</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-select">Modell</label>
+                        <select id="model-select" style="width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:1rem;">
+                            <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (schnell & guenstig)</option>
+                            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (am schnellsten)</option>
+                            <option value="claude-opus-4-6">Claude Opus 4.6 (beste Qualitaet)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;">
+                        <button onclick="closeSettings()" class="btn btn-secondary">Abbrechen</button>
+                        <button onclick="saveSettings()" class="btn btn-primary">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="modal-overlay" style="display:none;">
+            <div class="modal" style="text-align:center;padding:40px;">
+                <div class="loading-spinner"></div>
+                <h2 style="margin-top:20px;">KI erstellt Karteikarten...</h2>
+                <p id="loading-status" class="hint" style="margin-top:8px;">Dokument wird analysiert</p>
+            </div>
+        </div>
+
+        <!-- CHAPTER DETAIL MODAL -->
+        <div id="modal-overlay" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 id="modal-title"></h2>
+                    <button onclick="closeModal()" class="modal-close">&times;</button>
+                </div>
+                <div id="modal-content" class="modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/mammoth.browser.min.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
