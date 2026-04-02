@@ -169,7 +169,11 @@ WICHTIGE REGELN:
 3. Jede Karteikarte hat eine FRAGE (front) und eine ANTWORT (back)
 4. Die Fragen sollen GEZIELT und PRÄZISE sein - keine vagen "Was weißt du über X?" Fragen
 5. Nutze verschiedene Fragetypen: Definitionen, Zusammenhänge, Vergleiche, Anwendungen, Ursache-Wirkung
-6. Die Antworten sollen als STICHPUNKTE formatiert sein (mit "• " als Aufzählungszeichen), z.B. "• Punkt 1\n• Punkt 2\n• Punkt 3". Kein Fließtext, aber JEDES Detail aus dem Originaltext muss enthalten sein
+6. ANTWORT-FORMAT - strukturiere die Antworten IMMER so:
+   - Wichtige Begriffe/Kategorien als **fette Überschrift** auf eigener Zeile
+   - Darunter kurze Stichpunkte mit "- " (Bindestrich)
+   - KEIN Fließtext, NUR strukturierte Stichpunkte
+   - Beispiel: "**Eigenschaften:**\\n- Eigenschaft 1\\n- Eigenschaft 2\\n\\n**Funktion:**\\n- Punkt 1\\n- Punkt 2"
 7. Frage nach konkreten Fakten, Begriffen, Prozessen und Zusammenhängen
 8. KEIN INHALT DARF WEGGELASSEN WERDEN. Jede Information, jedes Detail, jede Zahl, jeder Begriff aus dem Dokument muss in mindestens einer Karteikarte vorkommen. Lieber mehr Karten erstellen als Inhalte weglassen
 9. Erstelle so viele Karten wie nötig, um den GESAMTEN Inhalt abzudecken - mindestens 3 pro Topic
@@ -180,7 +184,7 @@ Antworte AUSSCHLIESSLICH mit gültigem JSON in diesem Format (kein anderer Text!
     {
       "name": "Topic-Name",
       "cards": [
-        { "front": "Präzise Frage?", "back": "Knappe, vollständige Antwort" }
+        { "front": "Präzise Frage?", "back": "**Begriff:**\\n- Stichpunkt 1\\n- Stichpunkt 2" }
       ]
     }
   ]
@@ -418,7 +422,7 @@ function showChapterDetail(id) {
             ${t.cards.map(c => `
                 <div class="modal-card-item">
                     <strong>F:</strong> ${escapeHtml(c.front)}<br>
-                    <strong>A:</strong> ${escapeHtml(c.back)}
+                    <strong>A:</strong><br>${renderMarkdown(c.back)}
                     ${c.history.length > 0 ? `<br><small style="color:var(--text-muted)">Versuche: ${c.history.length} | Letzte: ${c.history[c.history.length-1]}</small>` : ''}
                 </div>
             `).join('')}
@@ -542,11 +546,11 @@ function renderTopicsPreview() {
                         <div class="preview-card">
                             <div class="preview-card-side">
                                 <div class="preview-card-label">Frage</div>
-                                <div class="preview-card-text">${escapeHtml(c.front)}</div>
+                                <div class="preview-card-text">${renderMarkdown(c.front)}</div>
                             </div>
                             <div class="preview-card-side">
                                 <div class="preview-card-label">Antwort</div>
-                                <div class="preview-card-text">${escapeHtml(c.back)}</div>
+                                <div class="preview-card-text">${renderMarkdown(c.back)}</div>
                             </div>
                         </div>
                     `).join('')}
@@ -700,8 +704,8 @@ function showNextCard() {
     document.getElementById('study-complete').style.display = 'none';
 
     document.getElementById('card-topic-label').textContent = card._topicName;
-    document.getElementById('card-front-text').textContent = card.front;
-    document.getElementById('card-back-text').textContent = card.back;
+    document.getElementById('card-front-text').innerHTML = renderMarkdown(card.front);
+    document.getElementById('card-back-text').innerHTML = renderMarkdown(card.back);
 
     const flashcard = document.getElementById('flashcard');
     flashcard.classList.remove('flipped');
@@ -798,6 +802,20 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Render simple markdown: **bold**, line breaks, - bullets
+function renderMarkdown(text) {
+    let html = escapeHtml(text);
+    // Bold: **text**
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Lines starting with "- " become bullet items
+    html = html.replace(/^- (.+)$/gm, '<span class="md-bullet">$1</span>');
+    // Lines starting with "• " become bullet items
+    html = html.replace(/^• (.+)$/gm, '<span class="md-bullet">$1</span>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    return html;
 }
 
 // --- Init ---

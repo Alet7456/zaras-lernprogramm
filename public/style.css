@@ -675,7 +675,26 @@ body {
 .card-text {
     font-size: 1.15rem;
     line-height: 1.7;
-    white-space: pre-wrap;
+    text-align: left;
+}
+
+.card-text strong {
+    color: var(--primary);
+    display: inline;
+}
+
+.md-bullet {
+    display: block;
+    padding-left: 18px;
+    position: relative;
+    margin: 2px 0;
+}
+
+.md-bullet::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
 }
 
 .card-buttons {
