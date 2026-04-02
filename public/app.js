@@ -169,10 +169,10 @@ WICHTIGE REGELN:
 3. Jede Karteikarte hat eine FRAGE (front) und eine ANTWORT (back)
 4. Die Fragen sollen GEZIELT und PRÄZISE sein - keine vagen "Was weißt du über X?" Fragen
 5. Nutze verschiedene Fragetypen: Definitionen, Zusammenhänge, Vergleiche, Anwendungen, Ursache-Wirkung
-6. Die Antworten sollen KNAPP aber VOLLSTÄNDIG sein - alles Wichtige, nichts Überflüssiges
+6. Die Antworten sollen als STICHPUNKTE formatiert sein (mit "• " als Aufzählungszeichen), z.B. "• Punkt 1\n• Punkt 2\n• Punkt 3". Kein Fließtext, aber JEDES Detail aus dem Originaltext muss enthalten sein
 7. Frage nach konkreten Fakten, Begriffen, Prozessen und Zusammenhängen
-8. Stelle sicher, dass die Karten den GESAMTEN Inhalt abdecken, nicht nur Teile davon
-9. Erstelle MINDESTENS 3 Karten pro Topic, bei umfangreichen Topics mehr
+8. KEIN INHALT DARF WEGGELASSEN WERDEN. Jede Information, jedes Detail, jede Zahl, jeder Begriff aus dem Dokument muss in mindestens einer Karteikarte vorkommen. Lieber mehr Karten erstellen als Inhalte weglassen
+9. Erstelle so viele Karten wie nötig, um den GESAMTEN Inhalt abzudecken - mindestens 3 pro Topic
 
 Antworte AUSSCHLIESSLICH mit gültigem JSON in diesem Format (kein anderer Text!):
 {
