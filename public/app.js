@@ -311,7 +311,7 @@ function renderDashboard() {
     list.innerHTML = chapters.map(ch => {
         const totalCards = ch.topics.reduce((sum, t) => sum + t.cards.length, 0);
         const reviewedCards = ch.topics.reduce((sum, t) =>
-            sum + t.cards.filter(c => c.history.length > 0).length, 0);
+            sum + t.cards.filter(c => c.history.length >= 2 && c.history[c.history.length - 1] === 'correct' && c.history[c.history.length - 2] === 'correct').length, 0);
         const progress = totalCards > 0 ? Math.round((reviewedCards / totalCards) * 100) : 0;
         const isSelected = selectedChapterIds.includes(ch.id);
         const date = new Date(ch.createdAt).toLocaleDateString('de-DE', {
