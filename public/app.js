@@ -140,7 +140,7 @@ async function callClaude(prompt, documentText) {
         },
         body: JSON.stringify({
             model: getModel(),
-            max_tokens: 4096,
+            max_tokens: 8192,
             messages: [{
                 role: 'user',
                 content: prompt + '\n\n--- DOKUMENT ---\n\n' + documentText
