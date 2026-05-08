@@ -4,11 +4,12 @@
 
 // --- State ---
 let chapters = [];
+let trash = [];               // deleted chapters (recycle bin)
 let selectedChapterIds = [];
 let parsedTopics = [];
 let studySession = null;
-let currentUser = null;       // extracted from URL /user/:name
-let saveTimeout = null;       // debounce server saves
+let currentUser = null;
+let saveTimeout = null;
 
 // --- User from URL ---
 function getUserFromUrl() {
@@ -23,6 +24,7 @@ async function loadChapters() {
         const res = await fetch(`/api/user/${encodeURIComponent(currentUser)}`);
         const data = await res.json();
         chapters = data.chapters || [];
+        trash = data.trash || [];
     } catch (err) {
         console.error('Fehler beim Laden:', err);
         chapters = [];
@@ -37,7 +39,7 @@ function saveChapters() {
         fetch(`/api/user/${encodeURIComponent(currentUser)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chapters })
+            body: JSON.stringify({ chapters, trash })
         }).catch(err => console.error('Fehler beim Speichern:', err));
     }, 300);
 }
@@ -294,6 +296,7 @@ function showView(viewName) {
     if (activeBtn) activeBtn.classList.add('active');
 
     if (viewName === 'dashboard') renderDashboard();
+    if (viewName === 'trash') renderTrash();
 }
 
 // --- Dashboard ---
@@ -312,7 +315,7 @@ function renderDashboard() {
     list.style.display = 'grid';
     empty.style.display = 'none';
 
-    list.innerHTML = chapters.map(ch => {
+    list.innerHTML = chapters.map((ch, idx) => {
         const totalCards = ch.topics.reduce((sum, t) => sum + t.cards.length, 0);
         const reviewedCards = ch.topics.reduce((sum, t) =>
             sum + t.cards.filter(c => c.history.length >= 2 && c.history[c.history.length - 1] === 'correct' && c.history[c.history.length - 2] === 'correct').length, 0);
@@ -342,6 +345,10 @@ function renderDashboard() {
                 </div>
                 <div class="chapter-card-actions">
                     <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); quickStudy('${ch.id}')">Lernen</button>
+                    <div class="move-buttons">
+                        <button class="btn-move" onclick="event.stopPropagation(); moveChapter('${ch.id}', -1)" title="Nach oben"${idx === 0 ? ' disabled' : ''}>▲</button>
+                        <button class="btn-move" onclick="event.stopPropagation(); moveChapter('${ch.id}', 1)" title="Nach unten"${idx === chapters.length - 1 ? ' disabled' : ''}>▼</button>
+                    </div>
                     <div class="kebab-wrapper">
                         <button class="kebab-btn" onclick="event.stopPropagation(); toggleKebab('${ch.id}')">&#8942;</button>
                         <div class="kebab-menu" id="kebab-${ch.id}">
@@ -402,11 +409,83 @@ function resetChapterProgress(id) {
 }
 
 function deleteChapter(id) {
-    if (!confirm('Kapitel wirklich löschen? Fortschritt geht verloren.')) return;
-    chapters = chapters.filter(c => c.id !== id);
+    if (!confirm('Kapitel in den Papierkorb verschieben?')) return;
+    const idx = chapters.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const removed = chapters.splice(idx, 1)[0];
+    removed.deletedAt = Date.now();
+    trash.push(removed);
     selectedChapterIds = selectedChapterIds.filter(sid => sid !== id);
     saveChapters();
     renderDashboard();
+}
+
+function moveChapter(id, direction) {
+    const idx = chapters.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= chapters.length) return;
+    [chapters[idx], chapters[newIdx]] = [chapters[newIdx], chapters[idx]];
+    saveChapters();
+    renderDashboard();
+}
+
+// --- Trash ---
+function renderTrash() {
+    const list = document.getElementById('trash-list');
+    const empty = document.getElementById('no-trash');
+
+    if (trash.length === 0) {
+        list.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    list.style.display = 'grid';
+    empty.style.display = 'none';
+
+    list.innerHTML = trash.map(ch => {
+        const totalCards = ch.topics.reduce((sum, t) => sum + t.cards.length, 0);
+        const date = new Date(ch.deletedAt || ch.createdAt).toLocaleDateString('de-DE', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+
+        return `
+            <div class="chapter-card" data-id="${ch.id}">
+                <div class="chapter-card-header">
+                    <div>
+                        <h3>${escapeHtml(ch.name)}</h3>
+                        <div class="chapter-card-date">Gelöscht: ${date}</div>
+                    </div>
+                </div>
+                <div class="chapter-card-meta">
+                    <span>${ch.topics.length} Topics</span>
+                    <span>${totalCards} Karten</span>
+                </div>
+                <div class="chapter-card-actions">
+                    <button class="btn btn-primary btn-sm" onclick="restoreChapter('${ch.id}')">Wiederherstellen</button>
+                    <button class="btn btn-danger btn-sm" onclick="permanentDeleteChapter('${ch.id}')">Endgültig löschen</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function restoreChapter(id) {
+    const idx = trash.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const restored = trash.splice(idx, 1)[0];
+    delete restored.deletedAt;
+    chapters.push(restored);
+    saveChapters();
+    renderTrash();
+}
+
+function permanentDeleteChapter(id) {
+    if (!confirm('Kapitel ENDGÜLTIG löschen? Das kann nicht rückgängig gemacht werden!')) return;
+    trash = trash.filter(c => c.id !== id);
+    saveChapters();
+    renderTrash();
 }
 
 function showChapterDetail(id) {

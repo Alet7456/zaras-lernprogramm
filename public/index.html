@@ -16,6 +16,7 @@
             <div class="nav-links">
                 <button onclick="showView('dashboard')" class="nav-btn active" data-view="dashboard">Meine Kapitel</button>
                 <button onclick="showView('upload')" class="nav-btn" data-view="upload">Neue Datei</button>
+                <button onclick="showView('trash')" class="nav-btn" data-view="trash">Papierkorb</button>
                 <button onclick="openSettings()" class="nav-btn" title="Einstellungen">Einstellungen</button>
             </div>
         </nav>
@@ -119,6 +120,20 @@
                     <div id="session-stats" class="session-stats"></div>
                     <button onclick="showView('dashboard')" class="btn btn-primary">Zurück zur Übersicht</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- TRASH VIEW -->
+        <div id="view-trash" class="view">
+            <div class="dashboard-header">
+                <h1>Papierkorb</h1>
+                <p class="subtitle">Gelöschte Kapitel können hier wiederhergestellt werden.</p>
+            </div>
+            <div id="trash-list" class="chapter-grid"></div>
+            <div id="no-trash" class="empty-state" style="display:none;">
+                <div class="empty-icon">🗑️</div>
+                <h2>Papierkorb ist leer</h2>
+                <p>Gelöschte Kapitel landen hier.</p>
             </div>
         </div>
 
